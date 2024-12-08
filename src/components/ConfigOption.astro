@@ -1,0 +1,18 @@
+<div class="info-container">
+  <slot name="info"/>
+</div>
+<div class="default">
+  <strong>Default</strong>
+  <slot name="default" />
+</div>
+
+<style>
+  .default {
+    border: 2px solid var(--sl-color-gray-5);
+    padding: 0.5rem;
+  }
+  .info-container {
+    border-top: 1px solid var(--sl-color-gray-5);
+    padding-top: 1rem;
+  }
+</style>

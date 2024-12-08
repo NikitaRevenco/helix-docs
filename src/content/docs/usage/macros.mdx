@@ -1,0 +1,254 @@
+---
+title: Macros
+description: Explore using Macros to automate repetitive tasks in Helix
+---
+
+import { T } from "@/termshots/macros/index.astro"
+
+Now that you've learned how to [refactor text using multiple cursors](/usage/multiple-cursors), the next step is to learn about macros and how to effectively use them for complex refactorings.
+
+## Introduction
+
+Macros are a way to record your keystrokes and then replay them whenever you want to.
+
+The two most important keys here are:
+
+- <kbd>Q</kbd> which begins recording a macro into the [register](/start-here/basics#registers) `Q`.
+- <kbd>q</kbd> which replays the macro from register `Q`.
+
+You can have a lot of macros at your disposal in various registers, ready to use whenever. You use registers with macros just like usual.
+
+For example, to record a macro into a specific register, press <kbd>"</kbd> to select the register, then a character which will be the register where your macro is stored, and then <kbd>Q</kbd>. For instance:
+
+- <kbd>"</kbd> + <kbd>e</kbd> + <kbd>Q</kbd> to record a macro into the `e` register.
+
+To stop recording, press `Q` again.
+
+Replay the macro by using register + <kbd>q</kbd>. For example:
+
+- <kbd>"</kbd> + <kbd>e</kbd> + <kbd>q</kbd>
+
+## Using macros
+
+1. Place your cursor on the first line, after the dash:
+
+   <T.CursorAfterDash />
+
+1. Use <kbd>Q</kbd> to begin recording a macro, and press <kbd>e</kbd> to select the full `thin` word:
+
+   <T.RecordingMacroBegins />
+
+1. Change it to `bold` using <kbd>c</kbd> to delete and insert mode, then type `bold` and <kbd>Esc</kbd> to go back to normal mode:
+
+   <T.ChangedThinToBoldMacro />
+
+1. Use <kbd>f</kbd> + <kbd>3</kbd> to find to next 3, and then <kbd>;</kbd> to collapse selection to a single cursor in order to select the `3`:
+
+   <T.SelectedFirst3 />
+
+1. Replace it with a `4` using <kbd>r</kbd> to enter replace mode which waits for the next character, and type `4`:
+
+   <T.Replaced3With4 />
+
+1. Press <kbd>Q</kbd> to stop recording the macro.
+
+   <T.FinishedRecordingMacro />
+
+1. Okay, so the hard part is done!
+
+   Now go back to the `-` you started from by using <kbd>F</kbd> + <kbd>-</kbd> which finds the previous `-`.
+
+   Repeat this motion by using <kbd>Alt</kbd> + <kbd>.</kbd> and then collapse selection with <kbd>;</kbd>:
+
+   <T.BackToTheBeginning />
+
+1. Hit <kbd>j</kbd> to go down a line and create 2 more cursors on each `-` by pressing <kbd>C</kbd> 2 more times:
+
+   <T.Created3MoreCursors />
+
+1. And just press <kbd>q</kbd> (note the lowercase q) to repeat the motions you've recorded earlier.
+
+   <T.FinalStateWithMacros />
+
+## Search and Select
+
+We've just explored the very basics of how to use multiple cursors and macros, but in fact they're a lot more powerful than seems at first glance.
+
+Let's consider the following file, which includes some repetition:
+
+<T.PythonBeginningState />
+
+And we want every variable to be a maximum of 3 characters, and functions to be static methods on a class.
+
+The final outcome will look like this:
+
+<T.PythonFinalState />
+
+---
+
+1. First, let's rename each of the functions from `calculate_*` to `get_*`.
+
+   The easiest way to do search-and-replace in Helix is to first select the entire file with <kbd>%</kbd>.
+
+   <T.SelectedFullPythonFile />
+
+1. We're going to use <kbd>s</kbd> which allows us to _**s**elect_ inside of our selection.
+
+   Basically, it takes an input and will search for that input and create a cursor everywhere it finds it.
+
+   <T.UsedSToSelectInsideSelection />
+
+1. Type the following: `calculate` and then <kbd>Enter</kbd>.
+
+   <T.TypedCalculate />
+
+   As you see, it created a selection and a cursor on every single instance of the `calculate` word.
+
+   We can now just press <kbd>c</kbd> to delete the contents of each selection, which also places us into insert mode, and type `get` then <kbd>Esc</kbd> to go back to normal more:
+
+   <T.ReplacedEachCalculateWithGet />
+
+1. Now that we have a cursor on each function definition, lets create an empty line above each cursor by pressing <kbd>O</kbd> and then writing `@staticmethod`, finally going back to normal mode with <kbd>Esc</kbd>:
+
+   <T.AddedStaticMethodIndicator />
+
+1. Our goal is to rename the parameters to be 3 letters.
+
+   To do this, we're going to first select the function definition as well as the first line of the body of each function, with <kbd>j</kbd> and then by using <kbd>x</kbd> twice:
+
+   <T.SelectedFirstTwoLinesOfEachFunction />
+
+1. Let's use <kbd>s</kbd> now which will ask us for a prompt.
+
+   This time, we won't just enter a string but we'll enter a very small regex: `\w+`, which selects every word:
+
+   <T.SelectedEveryWord />
+
+1. This selected a few extra words than we wanted, but that's okay! One of the selections is the "primary" selection which we can tell by the `2:3` in the left right corner, which means that our primary selection is on line 2 character 3.
+
+   We can make the next selection our primary selection by using <kbd>)</kbd>, which is seen by the `2:12` in the counter, meaning that our primary selection is at the `get_area` method:
+
+   <T.NextSelectionPrimary />
+
+   We can go back to the previous one with <kbd>(</kbd>:
+
+   <T.BackToPreviousSelection />
+
+1. By pressing <kbd>Alt</kbd> + <kbd>,</kbd>, we can remove the primary selection, so that `def` is not selected:
+
+   <T.RemovedPrimarySelection />
+
+1. Removing that selection automatically made `get_area` the next selected region. We don't want this one either, so we'll remove it again with <kbd>Alt</kbd> + <kbd>,</kbd>:
+
+   <T.RemovedPrimarySelectionAgain />
+
+   Press <kbd>)</kbd> a few times until you reach the next selection you want to remove. If you go over by one, just press <kbd>(</kbd> to make the previous selection primary.
+
+1. Let's repeat the previous step until we _only_ have the words `length`, `width` and `height` selected:
+
+   <T.OnlyParamsSelected />
+
+1. At this point, we can begin our removal process.
+
+   Go to the beginning of each word by pressing <kbd>b</kbd>, and then press <kbd>l</kbd> a couple of times until you are on the 4th character of each word:
+
+   <T.OnFourthCharOfEachWord />
+
+1. Let's press <kbd>e</kbd> to go to the end of each word which will highlight it:
+
+   <T.SelectEndOfEachParam />
+
+1. Press <kbd>d</kbd> to delete it.
+
+   <T.DeletedEndOfEachWord />
+
+1. Great we're almost there!
+
+   Let's actually undo this step so that we can look at an alternative way of accomplishing the same result.
+
+   Press `u` just once which will undo our replacement:
+
+   <T.UndidStep />
+
+1. An alternative way is to select the entire file again with <kbd>%</kbd>:
+
+   <T.SelectedEntireFileAgain />
+
+1. With the power of <kbd>s</kbd> and Regex, we can select the `length`, `width` and `height` words by chaining them together with the "OR" operator.
+
+   For instance, type the following: `length|width|height`:
+
+   <T.SelectedAllLengthWidthHeight />
+
+   This is certainly simpler but it's good to know both approaches.
+
+1. Hit <kbd>Enter</kbd> to select and go to the beginning of each word with <kbd>b</kbd>
+
+1. Move 3 characters to the right with <kbd>lll</kbd>
+1. Press <kbd>e</kbd> to go to the end of each word and delete it:
+
+   <T.RemovedLastPartOfEachParam />
+
+1. Lets to remove the variable declarations of `result` on each line, and instead directly return the calculation.
+
+   Go ahead and select the entire file again with <kbd>%</kbd> then use the <kbd>s</kbd> to bring up the select prompt again.
+
+1. Type `result =` which will select all instances of `result =`:
+
+   <T.SelectedAllResultVars />
+
+1. <kbd>Enter</kbd> to select, and then Press <kbd>C</kbd> to duplicate the selection on each line:
+
+   <T.SelectedAllResultVarsAndC />
+
+1. By using <kbd>Alt</kbd> + <kbd>(</kbd>, we can rotate the _contents_ of the selection backward:
+
+   <T.RotatedContentsOfSelections />
+
+   Try using <kbd>Alt</kbd> + <kbd>)</kbd> to rotate the selection forward. You can keep on pressing the key but the difference between <kbd>Alt</kbd> + <kbd>)</kbd> and <kbd>Alt</kbd> + <kbd>(</kbd> won't be obvious in this example, since we basically have the same selections repeated.
+
+   Regardless, press <kbd>Alt</kbd> + <kbd>)</kbd> at least once to get into the following state:
+
+   <T.RotatedContentsOfSelections />
+
+1. Collapse each cursor so that there is only a single selection with <kbd>;</kbd>:
+
+   <T.EachSelectionCollapsed />
+
+1. Now, just press <kbd>d</kbd> twice to delete two characters on each of the 6 lines:
+
+   <T.DeletedTwoChars />
+
+1. Okay so at this point, we are _almost_ there. We just need to delete the `result sult` line.
+
+   To do this, use the <kbd>s</kbd> again and type `s` in the prompt. This will select the `s` in each of your selections and place a cursor there:
+
+   <T.SelectedAllS />
+
+1. Press <kbd>Enter</kbd> to select, and then press <kbd>x</kbd> to select the entire line and <kbd>d</kbd> to delete it. Voila!
+
+   <T.Deleted3Lines />
+
+1. We've got just a few steps left. Namely, select the entire file again with <kbd>%</kbd>:
+
+   <T.SelectedEntireFileAgain2 />
+
+1. Press <kbd>\></kbd> which will indent everything by 1 level. We need this since we're going to nest it in a class, after all. You can also use <kbd>\<</kbd> to de-dent the selection by 1 level too.
+
+   <T.IndentAllBy1Level />
+
+1. Now, press <kbd>O</kbd> to create a newline above and enter Insert mode.
+
+1. Finally, type `class Calculator:` and <kbd>Esc</kbd> to go back to normal mode.
+
+   <T.FinalStatePython />
+
+We've accomplished our goal 🥳!
+
+## Next steps
+
+At your disposal is now one of the most powerful methods to manipulate text: Macros and Multiple Cursors. There are still ways to improve to become more powerful.
+
+- Check out [more refactoring examples](/help/refactor-examples).
+- Learn more advanced text manipulation techniques with [text objects](/usage/text-objects) and [surround](/usage/surround).
+- Configure [language server support](/usage/language-support) to gain access to a plethora of powerful tools such as workspace symbol search, variable name refactoring and more.

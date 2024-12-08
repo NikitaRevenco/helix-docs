@@ -1,0 +1,139 @@
+---
+title: Pickers
+description: Learn how to navigate and search codebases in Helix using tools such as a fuzzy finder
+---
+
+import { T } from "@/termshots/pickers/index.astro";
+
+import Master from "@/components/Master.astro";
+
+import { FileTree } from "@astrojs/starlight/components";
+
+A very efficient way of navigating across the filesystem and projects is not with a file tree, but rather by using pickers, which are interactive windows used to select various kinds of items.
+
+If you know at least a few characters of the filename, then you can use a file picker to effectively teleport to that file -- via typing those few characters and selecting the first result. This is possible thanks to [fuzzy searching](https://www.techtarget.com/whatis/definition/fuzzy-search).
+
+## Useful pickers
+
+Some of the most useful pickers that are really worth knowing about.
+
+### File Picker
+
+Suppose we have the following directory structure, and we're located in the `my-project` directory:
+
+<FileTree>
+
+- my-project **⟵** you are here
+  - src
+    - app
+      - page.tsx
+      - globals.css **⟵** you want to go here
+      - layout.tsx
+    - components
+      - button.tsx
+  - tsconfig.json
+  - package.json
+  - README.md
+
+</FileTree>
+
+If we open a specific file e.g. with `hx README.md`, then it'll just open normally.
+
+But if we open the _directory_, then it'll actually open a file picker at that location. For instance, if we run `hx src`:
+
+<T.OpenedFilePicker />
+
+It opens a file picker in the `src` directory, allowing us to perform a _fuzzy search_, recursively matching against _every file in the directory, and any sub-directory_.
+
+Typing just a few characters of the file that we want to go then pressing <kbd>Enter</kbd> to select the first result will teleport us there. Extremely handy when you know the name of a file and just want to go there, without wasting time traversing directories.
+
+You can also manually open a file picker by using <kbd>Space</kbd> + <kbd>f</kbd>. This will open it at the _root project directory_, so Helix will traverse up the tree to find whatever it considers the "project root", usually if there is a `.git` folder.
+
+To open a file picker at the _current working directory_, use <kbd>Space</kbd> + <kbd>f</kbd>.
+
+:::note
+
+On the latest release, the global search is still available, but there will not be an interactive picker.
+
+:::
+
+<Master>
+
+### Global search
+
+<kbd>Space</kbd> + <kbd>/</kbd> opens a picker where you can search for any string in any of the files recursively from the current directory.
+
+For example, to find strings with `className`:
+
+<T.GlobalSearch />
+
+By pressing <kbd>Enter</kbd> we can open the file.
+
+</Master>
+
+### Open last picker
+
+Suppose we navigated through a few more files, and now we want to go back.
+
+We could just repeat the last steps, but there's a better way. <kbd>Space</kbd> + <kbd>'</kbd> opens the exact picker that you last used, left in its previous state:
+
+<T.OpenLastPicker />
+
+### Buffer picker
+
+Say we opened several files and we'd like to go work on one of the files we already opened. But we don't want to perform the task of finding that file again, as it's buried somewhere _very deep_ within the project.
+
+You can open a picker that shows your currently open buffers with <kbd>Space</kbd> + <kbd>b</kbd>:
+
+<T.BufferPicker />
+
+## Usage
+
+Most pickers perform fuzzy matching using [fzf syntax](https://github.com/junegunn/fzf?tab=readme-ov-file#search-syntax).
+
+Two exceptions are:
+
+- Global search picker, which uses regex
+- Workspace symbol picker, which passes search terms to the LSP.
+
+:::note
+
+For now, OR operations with `|` are not supported, so e.g. you can't search for `cat|dog` to find files with the string cat or the string dog
+
+:::
+
+### Keymap
+
+Within a picker, the following commands are useful:
+
+- <kbd>Enter</kbd> opens the selected file
+- <kbd>Ctrl</kbd> + <kbd>v</kbd> opens as a horizontal split
+- <kbd>Ctrl</kbd> + <kbd>s</kbd> opens as a vertical split
+
+For more keymaps that you can use in a picker, see the [picker keymap reference](/reference/keymap#picker).
+
+<Master>
+
+### Filtering
+
+If a picker shows multiple columns, you may apply the filter to a specific column by prefixing the column name with `%`.
+
+Column names can be shortened to any prefix, so `%p`, `%pa` or `%pat` all mean the same as `%path`.
+
+For example, a query of `helix %p .toml !lang` in the global search picker searches for the term "helix" within files with paths ending in ".toml" but not including "lang".
+
+</Master>
+
+### Using registers in pickers
+
+You can insert the contents of a [register](/start-here/basics#registers) using <kbd>Ctrl</kbd> + <kbd>r</kbd> followed by a register name.
+
+For example, one could insert the currently selected text using <kbd>Ctrl</kbd> + <kbd>r</kbd> + <kbd>.</kbd>, or the directory of the current file using <kbd>Ctrl</kbd> + <kbd>r</kbd> + <kbd>%</kbd> followed by <kbd>Ctrl</kbd> <kbd>w</kbd> to remove the last path section.
+
+The global search picker will use the contents of the [search register](/reference/registers#default-registers) if you press <kbd>Enter</kbd> without typing a filter.
+
+For example, pressing <kbd>\*</kbd> + <kbd>Space</kbd> + <kbd>/</kbd> + <kbd>Enter</kbd> will start a global search for the currently selected text.
+
+## Next steps
+
+- More pickers can be found in the [keymap reference](/reference/keymap#space-mode).

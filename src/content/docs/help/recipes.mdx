@@ -1,0 +1,242 @@
+---
+title: Recipes
+description: Common answers to problems in Helix such as Git Integration
+---
+
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+Includes common solutions to some problems.
+
+## Git Integration
+
+Helix comes with basic git integration such as the ability to see which files have been modified on the gutters, and acting on git hunks as text objects. But a more comprehensive git integration can be desired, which is understandable.
+
+Lazygit is the most popular git TUI and you can smoothly integrate it with Helix with the following keymap:
+
+```toml
+# helix/config.toml
+[keys.normal]
+C-g = [
+    ":write-all",
+    ":new",
+    ":insert-output lazygit",
+    ":buffer-close!",
+    ":redraw",
+    ":reload-all"
+]
+```
+
+Explanation
+
+1. `write-all`: save all buffers so that the changes can be shown in lazygit and committed right away
+2. `new`: create new empty buffer
+3. `insert-output lazygit`: runs the `lazygit` command and inserts it's output into the new buffer
+4. When you exit `lazygit`, `buffer-close!` will kill the previously empty buffer, sending you back to where you were previously.
+5. `redraw` is necessary to re-render the UI to show the buffers
+6. `reload-all` because if e.g. you commit everything, helix will still show the symbols indicating that lines were changed / deleted on the left of the line numbers. This will prevent that
+
+## Remap Caps Lock to Escape
+
+The <kbd>Esc</kbd> key is quite far away from the home row on most keyboards. Due to this fact, many people remap <kbd>Caps Lock</kbd> to <kbd>Esc</kbd>.
+
+To do this, follow instructions for your operating system.
+
+<Tabs>
+<TabItem label="Linux" icon="linux">
+
+You can use [`keyd`](https://github.com/rvaiya/keyd), which is a modern alternative to `xmodmap` compatible with Wayland and XOrg.
+
+<Steps>
+
+1. Install `keyd` using your system's package manager
+
+1. Start the `keyd` daemon:
+
+   ```sh
+   sudo systemctl enable keyd
+   ```
+
+1. Place the following in `/etc/keyd/default.conf`
+
+   ```sh
+   [ids]
+   *
+   [main]
+   # Maps capslock to escape when pressed and control when held.
+   capslock = overload(control, esc)
+
+   # Remaps the escape key to capslock
+   esc = capslock
+   ```
+
+1. Run `sudo keyd reload` to reload the config set.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="macOS" icon="apple">
+
+<Steps>
+
+1. Open _System Settings > Keyboard > Keyboard Shortcuts > Modifier Keys_
+
+1. Map the caps lock key to escape.
+
+</Steps>
+
+</TabItem>
+
+<TabItem label="Windows" icon="windows">
+
+AutoHotkey is a free and open source scripting language for Windows, primarily useful for remapping keyboard keys in our example.
+
+<Steps>
+
+1. Install AutoHotkey from the [AutoHotkey installation page](https://www.autohotkey.com/download/).
+
+1. Create a new `remap-caps-lock.ahk` file on your desktop.
+
+1. Right-click on the new script file and select `Edit script`.
+
+1. Add this line to the script:
+
+   ```ahk
+   CapsLock::Esc
+   ```
+
+1. Run the script by double-clicking on it. It will start running in the background.
+
+</Steps>
+
+:::tip[Make it run automatically (optional)]
+
+<Steps>
+
+1. Press <kbd>Win</kbd> + <kbd>R</kbd> to open the `Run` dialog.
+
+1. Type `shell:startup` and press <kbd>Enter</kbd>.
+
+1. Copy the `remap-caps-lock.ahk` file and paste it into the Startup folder.
+
+</Steps>
+
+The script will run automatically every time you start your computer.
+
+:::
+
+</TabItem>
+
+</Tabs>
+
+## Project-wide Search and Replace
+
+In helix, you can perform search-and-replace in a file by using <kbd>%</kbd> to select the whole file and then <kbd>s</kbd> to match a regex against the file, placing cursors on each match.
+
+But what if you want to perform a project-wide search and replace? Helix currently doesn't provide that functionality, but there is an external tool called [`scooter`](https://github.com/thomasschafer/scooter) which was created exactly for this purpose. Check it out!
+
+## Integrated Terminal
+
+At the moment, there's no way to open a terminal from within Helix. Despite that, many users prefer using <kbd>Ctrl</kbd> + <kbd>z</kbd> which puts the current process to sleep.
+
+When you run this command from inside Helix, it will be put to sleep. You'll be able to access the terminal again, browse files, and do everything else you usually do.
+
+Once you need to return back to Helix, you can type `fg` in the terminal which will bring Helix back from sleep and resume it exactly where you left it. You can use this to run background processes while using Helix, and other shell commands.
+
+:::tip[Use Ctrl + Z to toggle between Helix and Terminal]
+
+If you prefer using <kbd>Ctrl</kbd> + <kbd>z</kbd> to put Helix to sleep, and then use <kbd>Ctrl</kbd> + <kbd>z</kbd> to wake it up again instead of using `fg`, then you can!
+
+Depending on your shell, put a snippet of code into your terminal.
+
+<Tabs>
+
+<TabItem label="zsh">
+
+Add the following to your `~/.zshrc`:
+
+```sh
+# Allow Ctrl-z to toggle between suspend and resume
+function Resume {
+  fg
+  zle push-input
+  BUFFER=""
+  zle accept-line
+}
+zle -N Resume
+bindkey "^Z" Resume
+```
+
+</TabItem>
+
+<TabItem label="fish">
+
+Add the following to your fish config file:
+
+```sh
+bind \cz 'fg 2>/dev/null; commandline -f repaint'
+```
+
+This is possible since [fish v3.2.0](https://fishshell.com/docs/3.2/relnotes.html#new-or-improved-bindings).
+
+Source: [Binding CTRL-Z](https://github.com/fish-shell/fish-shell/issues/7152#issuecomment-663575001).
+
+</TabItem>
+
+<TabItem label="bash">
+
+Use [bash-preexec.sh](https://github.com/rcaloras/bash-preexec) to:
+
+- Disable the Ctrl-Z keybinding before printing the prompt
+- Enable the Ctrl-Z keybinding before executing a command
+
+This way, we are able to repurpose Ctrl-Z when in a Bash interactive prompt. But any command ran by Bash will still be able to suspend normally with <kbd>Ctrl</kbd> + <kbd>Z</kbd>.
+
+You might need to change this path to your bash-preexec.sh location.
+
+```sh
+source ~/.config/bash/bash-preexec.sh
+preexec () {
+  stty susp '^Z'
+}
+precmd () {
+  stty susp undef
+}
+
+# Bind Ctrl-Z to "fg %-" (resume next to last suspended job, or last if only one)
+# This binding works like this:
+# - If you have one job, Ctlr-Z will toggle in and out of it.
+# - If you have more  jobs, "Ctrl-Z Ctrl-Z" will toggle between the last two.
+bind '"\C-z":"fg %-\n"'
+```
+
+</TabItem>
+
+</Tabs>
+
+:::
+
+## More intuitive x and X motions
+
+Some people prefer to remap <kbd>x</kbd> and <kbd>X</kbd> motions from the defaults:
+
+```toml
+# helix/config.toml
+x = "extend_line_below"
+X = "extend_to_line_bounds"
+```
+
+To the following:
+
+```toml
+# helix/config.toml
+x = "select_line_below"
+X = "select_line_above"
+```
+
+Due to the fact that they may find it more natural to have <kbd>x</kbd> and <kbd>X</kbd> perform opposite motions, similar to other motions in Helix.
+
+Currently some people want this to become the default.
+
+- [Discussion](https://github.com/helix-editor/helix/discussions/11600)
+- [Pull request](https://github.com/helix-editor/helix/pull/12013)
